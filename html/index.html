@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Mini-Column Demo</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+		 body {
+			 color: #cccccc;
+			 font-family:Monospace;
+			 font-size:13px;
+			 text-align:center;
+       
+			 background-color: #000000;
+			 margin: 0px;
+			 overflow: hidden;
+		 }
+		 #info {
+			 position: absolute;
+			 top: 0px; width: 100%;
+			 padding: 5px;
+		 }
+		 a {
+			 color: #0080ff;
+		 }
+     #sequence {
+       position: absolute;
+       top: 0px;
+       /* justify-content: center; */
+       /* align-items: center; */
+       /* left: 5%; */
+       /* width: 280; */
+       /* background-color: #444444; */
+     }
+     #filter {
+       position: absolute;
+       bottom: 0px;
+     }
+		</style>
+		<script src="js/libs/dat.gui.min.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/libs/three.min.js"></script>
+		<script src="js/libs/OrbitControls.js"></script>
+		<script src="js/libs/Lut.js"></script>
+		<script src="js/logGabor.js"></script>
+		<script src="js/RetinaView.js"></script>
+		<script src="js/SequenceView.js"></script>
+    <script src="js/CortexView.js"></script>
+		<script src="js/gui.js"></script>
+		<script src="js/neuron.js"></script>
+		<script src="js/minicolumn.js"></script>
+		<script src="js/column.js"></script>
+    <script src="js/cortex.js"></script>
+		<script src="js/main.js"></script>
+    <!-- <script type="x-shader/x-vertex" id="neuronVertShader">
+		     attribute float size;
+		     attribute vec3 customColor;
+		     varying vec3 vColor;
+		     void main() {
+			   vColor = customColor;
+			   vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+			   gl_PointSize = size * ( 300.0 / -mvPosition.z );
+			   gl_Position = projectionMatrix * mvPosition;
+		     }
+		     </script>
+		     <script type="x-shader/x-fragment" id="neuronFragShader">
+		     uniform vec3 color;
+		     uniform sampler2D texture;
+		     varying vec3 vColor;
+		     void main() {
+			   gl_FragColor = vec4( color * vColor, 1.0 );
+			   gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+		     }
+		     </script> -->
+	</head>
+	<body>
+    <span id="sequence"></span>
+		<div id="container"></div>
+    <div id="filter"></div>
+	</body>
+</html>
