@@ -27,22 +27,22 @@ class GUI extends dat.GUI {
       } );
     //----------------------------------------------------------------
 	  this.showProxDendrites = false;
-	  this.add( this, "showProxDendrites" )
-      .onChange( function( value ) {
-        cortexView.camera.layers.toggle(proximalLayer);
-      } );
+	  // this.add( this, "showProxDendrites" )
+    //   .onChange( function( value ) {
+    //     cortexView.camera.layers.toggle(proximalLayer);
+    //   } );
     //----------------------------------------------------------------
 	  this.showDistDendrites = false;
-	  this.add( this, "showDistDendrites" )
-      .onChange( function( value ) {
-        cortexView.camera.layers.toggle(distalLayer);
-      } );
+	  // this.add( this, "showDistDendrites" )
+    //   .onChange( function( value ) {
+    //     cortexView.camera.layers.toggle(distalLayer);
+    //   } );
     //----------------------------------------------------------------
 	  this.showApical = false;
-	  this.add( this, "showApical" )
-      .onChange( function( value ) {
-        cortexView.camera.layers.toggle(apicalLayer);
-      } );
+	  // this.add( this, "showApical" )
+    //   .onChange( function( value ) {
+    //     cortexView.camera.layers.toggle(apicalLayer);
+    //   } );
     //----------------------------------------------------------------
 	  this.saccade = false;
 	  this.add( this, "saccade" )
