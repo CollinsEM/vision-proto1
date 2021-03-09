@@ -1,13 +1,14 @@
 {
-  "name": "mnist_sequence_learner",
-  "version": "1.0.0",
-  "description": "HTM Sequence learning benchmark",
+  "name": "vision-proto1",
+  "version": "0.5.0",
+  "description": "Visualization of HTM/TBT models of early vision algorithms",
   "repository": {
     "type": "git",
-    "url": "git@gitlab.com:eric.m.collins/mnist_sequence_learner.git"
+    "url": "git@github.com:CollinsEM/vision-proto1.git"
   },
   "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Eric M. Collins",
