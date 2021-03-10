@@ -85,11 +85,14 @@ class SequenceView {
       var view = new DataView(this.response);
       var img = new ImageData(numCols, numRows);
       var q = 0;
+      var r = Math.random();
+      var g = Math.random();
+      var b = Math.random();
       for (var i=0, p=0; i<numRows; ++i) {
         for (var j=0; j<numCols; ++j, ++q) {
-          for (var k=0; k<3; ++k) {
-            img.data[p++] = view.getUint8(q);
-          }
+          img.data[p++] = Math.floor(r*view.getUint8(q));
+          img.data[p++] = Math.floor(g*view.getUint8(q));
+          img.data[p++] = Math.floor(b*view.getUint8(q));
           img.data[p++] = 255;
         }
       }
