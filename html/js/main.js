@@ -11,7 +11,7 @@ let colRadius = 400;
 let colHeight = 800;
 let maxSensorRadius = 7;
 
-var numMCLoops = 1;           // number of loops of minicolumns to generate
+var numMCLoops = 2;           // number of loops of minicolumns to generate
 var maxMiniCols= 1 + 6*numMCLoops*(numMCLoops+1)/2;// Maximum number of minicolumns
 
 var maxNeurons = 64;          // number of neurons per minicolumn to generate
@@ -44,7 +44,7 @@ function init() {
   
   logGabor = new LogGaborFilter(numMCLoops+1, 2*maxSensorRadius+1);
   // For static filters, we should only need to do this once.
-  logGabor.render();
+  // logGabor.render();
   
   seqView = new SequenceView(gui.NI, gui.NJ);
   cortex = new Cortex();
@@ -76,5 +76,7 @@ function animate() {
 	cortexView.render();
   // Render the current attention stencil in the sequence view.
   seqView.renderStencil();
+  // Render filters
+  logGabor.render();
 }
 
