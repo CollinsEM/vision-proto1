@@ -1,16 +1,20 @@
 class LogGaborFilter {
-  constructor(numLoops, filterWidth) { // NK, NP, N) {
+  constructor(numScales, filterWidth) { // NK, NP, N) {
+    this.numScales = numScales;
     this.filterWidth  = filterWidth || 49; // length and width of filter in pixels
-    var NI = this.filterWidth;
-    var NJ = this.filterWidth;
-    var NK = numLoops+1;  // number of length scales
-    var W = (NK>1 ? 6*NI*(NK-1) : NI);
-    var H = NJ*NK;
+    const NI = this.filterWidth;
+    const NJ = this.filterWidth;
+    const NK = this.numScales;  // number of length scales
+    const W = (NK>1 ? 6*NI*(NK-1) : NI);
+    const H = NJ*NK;
     
     this.canvas = document.createElement('canvas');
     this.canvas.id = 'filterView';
     this.canvas.width = W;
     this.canvas.height = H;
+    this.canvas.addEventListener('click', this.onMouseClick(this));
+    this.canvas.addEventListener('mousemove', this.onMouseMove(this));
+    
     this.context = this.canvas.getContext('2d');
     this.context.imageSmoothingEnabled = false;
     
@@ -95,6 +99,40 @@ class LogGaborFilter {
     this.img = new ImageData(data, W, H);
     this.context.clearRect(0, 0, W, H);
     this.context.putImageData(this.img, 0, 0);
+  }
+  onMouseClick( obj ) {
+    return function( event ) {
+      event.stopPropagation();
+      const NI = obj.filterWidth;
+      const NJ = obj.filterWidth;
+      const NK = obj.numScales;  // number of length scales
+      const W = (NK>1 ? 6*NI*(NK-1) : NI);
+      const H = NJ*NK;
+      const i = Math.floor(event.layerX/NI);
+      const j = Math.floor(event.layerY/NJ);
+      console.log(event.buttons, event.layerX, event.layerY, i, j);
+    };
+  }
+  onMouseMove( obj ) {
+    return function( event ) {
+      event.stopPropagation();
+      const NI = obj.filterWidth;
+      const NJ = obj.filterWidth;
+      const NK = obj.numScales;  // number of length scales
+      const W = (NK>1 ? 6*NI*(NK-1) : NI);
+      const H = NJ*NK;
+      const k = Math.floor(event.layerY/NJ);
+      const NP = (6*k || 1); // Number of filters at the k'th scale (mini-column loops)
+      const Y0 = k*NJ; // Starting row index for k'th scale filter
+      const X0 = Math.floor((W - NI*NP)/2); // Starting col index for k'th scale filter
+      const i = Math.floor((event.layerX-X0)/NI);
+      if (i>=0 && i<NP) {
+        const idx = (k-1)*k/2 + i;
+        console.log(event.buttons, event.layerX, event.layerY, i, k, idx);
+      }
+      
+      // if (event.buttons == 1) seq.setMouse(event.layerX, event.layerY);
+    };
   }
 };
 

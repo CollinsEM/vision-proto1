@@ -11,9 +11,8 @@ let colRadius = 400;
 let colHeight = 800;
 let maxSensorRadius = 7;
 
-var numMCLoops = 2;           // number of loops of minicolumns to generate
-var maxMiniCols= 1;           // number of columns to generate
-for (var i=1; i<=numMCLoops; ++i) maxMiniCols += i*6;
+var numMCLoops = 1;           // number of loops of minicolumns to generate
+var maxMiniCols= 1 + 6*numMCLoops*(numMCLoops+1)/2;// Maximum number of minicolumns
 
 var maxNeurons = 64;          // number of neurons per minicolumn to generate
 var numNeurons = 16;          // number of neurons per minicolumn currently visible
@@ -43,7 +42,7 @@ window.addEventListener( 'resize', onWindowResize, false );
 function init() {
 	gui = new GUI();
   
-  logGabor = new LogGaborFilter(numMCLoops, 2*maxSensorRadius+1);
+  logGabor = new LogGaborFilter(numMCLoops+1, 2*maxSensorRadius+1);
   // For static filters, we should only need to do this once.
   logGabor.render();
   
