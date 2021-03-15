@@ -26,15 +26,29 @@
      #sequence {
        position: absolute;
        top: 0px;
-       /* justify-content: center; */
-       /* align-items: center; */
+       justify-content: center;
+       align-items: center;
        /* left: 5%; */
        /* width: 280; */
        /* background-color: #444444; */
      }
-     #filter {
-       position: absolute;
-       bottom: 0px;
+     #atoms {
+         position: absolute;
+         left: 0%;
+         bottom: 0%;
+         width: 33%;
+     }
+     #gatedInput {
+         position: absolute;
+         left: 33%;
+         bottom: 0%;
+         width: 33%
+     }
+     #gatedOutput {
+         position: absolute;
+         right: 0%;
+         bottom: 0%;
+         width: 33%
      }
 		</style>
 		<script src="js/libs/dat.gui.min.js"></script>
@@ -45,6 +59,7 @@
 		<script src="js/logGabor.js"></script>
 		<script src="js/RetinaView.js"></script>
 		<script src="js/SequenceView.js"></script>
+		<script src="js/SensorView.js"></script>
     <script src="js/CortexView.js"></script>
 		<script src="js/gui.js"></script>
 		<script src="js/neuron.js"></script>
@@ -74,8 +89,10 @@
 		     </script> -->
 	</head>
 	<body>
-    <span id="sequence"></span>
+    <div id="sequence"></div>
 		<div id="container"></div>
-    <div id="filter"></div>
+    <span id="atoms"></span>
+    <span id="gatedInput"></span>
+    <span id="gatedOutput"></span>
 	</body>
 </html>

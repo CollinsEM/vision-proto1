@@ -6,16 +6,25 @@ class SequenceView {
     this.NJ = nj;
     this.x0 = this.NJ*14; // Center the stencil
     this.y0 = this.NI*14;
-    this.canvas = document.createElement('canvas');
-    this.canvas.id = 'seqView';
-    this.canvas.width = this.NJ*28;
-    this.canvas.height = this.NI*28;
-    this.canvas.addEventListener('mousedown', this.onMouseDown(this));
-    this.canvas.addEventListener('mousemove', this.onMouseMove(this));
-    this.context = this.canvas.getContext('2d');
-    this.context.imageSmoothingEnabled = false;
+    
+    this.seqCanvas = document.createElement('canvas');
+    this.seqCanvas.id = 'sequenceView';
+    this.seqCanvas.width = this.NJ*28;
+    this.seqCanvas.height = this.NI*28;
+    this.seqCanvas.addEventListener('mousedown', this.onMouseDown(this));
+    this.seqCanvas.addEventListener('mousemove', this.onMouseMove(this));
+    this.seqContext = this.seqCanvas.getContext('2d');
+    this.seqContext.imageSmoothingEnabled = false;
+    document.getElementById('sequence').appendChild(this.seqCanvas);
 
-    document.getElementById('sequence').appendChild(this.canvas);
+    const W = (2*numColLoops+1)*14;
+    this.outCanvas = document.createElement('canvas');
+    this.outCanvas.id = 'outputView';
+    this.outCanvas.width = W;
+    this.outCanvas.height = W;
+    this.outContext = this.outCanvas.getContext('2d');
+    this.outContext.imageSmoothingEnabled = false;
+    document.getElementById('gatedOutput').appendChild(this.outCanvas);
     
     this.currSeq = [];
     var N = this.NI*this.NJ;
@@ -50,8 +59,8 @@ class SequenceView {
         this.getNewImage(num);
       }
     }
-    this.canvas.height = ni*28;
-    this.canvas.width = nj*28;
+    this.seqCanvas.height = ni*28;
+    this.seqCanvas.width = nj*28;
     this.NI = ni;
     this.NJ = nj;
   }
@@ -71,7 +80,7 @@ class SequenceView {
   }
   //--------------------------------------------------------------------
   setMouse(x, y) {
-    var R = numColLoops*gui.colRadius;
+    var R = numColLoops*gui.sensorRadius;
     this.x0 = Math.min(this.NJ*28-2*R,Math.max(2*R,x));
     this.y0 = Math.min(this.NI*28-sqrt3*R,Math.max(sqrt3*R,y));
     // Request rendering update
@@ -112,40 +121,46 @@ class SequenceView {
   }
   //--------------------------------------------------------------------
   render() {
-    const R = Math.round(gui.colRadius);
+    const R = Math.round(gui.sensorRadius);
+    const C = Math.floor((this.outCanvas.width-R)/2);
     if (!this.seqUpdate) return;
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.seqContext.clearRect(0, 0, this.seqCanvas.width, this.seqCanvas.height);
     // Render the current sequence
     for (var i=0; i<this.currSeq.length; ++i) {
       if (this.trainSet[i] !== undefined) {
         var x = parseInt(28*(i%this.NJ));
         var y = parseInt(28*Math.floor(i/this.NJ));
-        this.context.putImageData(this.trainSet[i], x, y);
+        this.seqContext.putImageData(this.trainSet[i], x, y);
       }
     }
     // Save the image data under the current fovea stencil
     var x0 = this.x0;
     var y0 = this.y0;
     var ii = 0;
-    if (ii<gui.numColumns) this.stencilData[ii++] = this.captureNode(x0, y0);
+    if (ii<gui.numColumns) {
+      const img = this.captureNode(x0, y0);
+      this.stencilData[ii++] = img.data;
+    }
 	  for (var i=1; i<=numColLoops && ii<gui.numColumns; ++i) {
       for (var j=1; j<=i && ii<gui.numColumns; ++j) {
         var x1 = (2*i-j)*sqrt3/2;
         var y1 = (j*3/2);
         var rad = R*Math.sqrt(x1*x1 + y1*y1);
         var ang = Math.atan2(y1, x1);
-        for (var k=0, th=ang; k<6 && ii<gui.numColumns; ++k, ++ii, th+=Math.PI/3) {
-          this.stencilData[ii] = this.captureNode(Math.floor(x0 + rad*Math.cos(th)),
-                                                  Math.floor(y0 + rad*Math.sin(th)));
+        for (var k=0, th=ang; k<6 && ii<gui.numColumns; ++k, th+=Math.PI/3) {
+          const x = Math.floor(x0 + rad*Math.cos(th));
+          const y = Math.floor(y0 + rad*Math.sin(th));
+          const img = this.captureNode(x, y);
+          this.stencilData[ii++] = img.data;
         }
       }
     }
   }
   //--------------------------------------------------------------------
   renderStencil() {
-    const R = Math.round(gui.colRadius);
-    this.context.strokeStyle = "green";
-    this.context.lineWidth = 1;
+    const R = Math.round(gui.sensorRadius);
+    this.seqContext.strokeStyle = "green";
+    this.seqContext.lineWidth = 1;
     var x0 = this.x0;
     var y0 = this.y0;
     var ii = 0;
@@ -164,15 +179,15 @@ class SequenceView {
   }
   //--------------------------------------------------------------------
   renderNode(x, y) {
-    const R = Math.round(gui.colRadius);
-    this.context.beginPath();
-    this.context.ellipse(x, y, R, R, 0, 0, 2*Math.PI);
-    this.context.stroke();
+    const R = Math.round(gui.sensorRadius);
+    this.seqContext.beginPath();
+    this.seqContext.ellipse(x, y, R, R, 0, 0, 2*Math.PI);
+    this.seqContext.stroke();
   }
   //--------------------------------------------------------------------
   captureNode(x, y) {
-    const R = Math.round(gui.colRadius);
-    return this.context.getImageData(x-R, y-R, 2*R+1, 2*R+1).data;
+    const R = Math.round(gui.sensorRadius);
+    return this.seqContext.getImageData(x-R, y-R, 2*R+1, 2*R+1);
   }
 };
 

@@ -1,3 +1,5 @@
+"use strict";
+
 class GUI extends dat.GUI {
   constructor() {
     super();
@@ -14,10 +16,22 @@ class GUI extends dat.GUI {
         if (value != seqView.NJ) seqView.resize( gui.NI, gui.NJ );
       } );
     //----------------------------------------------------------------
-	  this.showNeurons = false;
+	  this.animate = true;
+    this.add( this, "animate" )
+      .onChange( function( value ) {
+        if (value) animate();
+      } );
+    //----------------------------------------------------------------
+	  this.showNeurons = true;
 	  this.add( this, "showNeurons" )
       .onChange( function( value ) {
         cortexView.camera.layers.toggle(neuronLayer);
+      } );
+    //----------------------------------------------------------------
+	  this.showColumns = true;
+	  this.add( this, "showColumns" )
+      .onChange( function( value ) {
+        cortexView.camera.layers.toggle(columnLayer);
       } );
     //----------------------------------------------------------------
 	  this.showMiniColumns = true;
@@ -44,14 +58,14 @@ class GUI extends dat.GUI {
     //     cortexView.camera.layers.toggle(apicalLayer);
     //   } );
     //----------------------------------------------------------------
-	  this.saccade = false;
+	  this.saccade = true;
 	  this.add( this, "saccade" )
       .onChange( function( value ) {
         cortex.allowSaccades( value );
       } );
     //----------------------------------------------------------------
-	  this.gabor = true;
-	  this.add( this, "gabor" );
+	  // this.gabor = true;
+	  // this.add( this, "gabor" );
 	  // this.add( this, "gabor" )
     //   .onChange( function( value ) {
     //   } );
@@ -59,7 +73,7 @@ class GUI extends dat.GUI {
 	  this.numNeurons = numNeurons;
 	  this.add( this, "numNeurons", 0, maxNeurons, 1 )
       .onChange( function( value ) {
-        columns.forEach( function(col, idx) {
+        cortex.columns.forEach( function(col, idx) {
 		      col.miniColumns.forEach( function(mc) {
             mc.numNeurons = parseInt( value );
 		        mc.neurons.setDrawRange( 0, mc.numNeurons );
@@ -85,8 +99,8 @@ class GUI extends dat.GUI {
         } );
 	    } );
     //----------------------------------------------------------------
-    this.colRadius = 3;
-	  this.add( this, "colRadius", 1, maxSensorRadius, 0.5 );
+    this.sensorRadius = 3;
+	  this.add( this, "sensorRadius", 1, maxSensorRadius, 0.5 );
     //----------------------------------------------------------------
     // this.moving = false;
 	  // this.add( this, "moving" );
@@ -119,10 +133,18 @@ class GUI extends dat.GUI {
     //     computeProximalSynapses();
     //   } );
     //------------------------------------
-    // this.dist = this.addFolder('Distal');
-	  // this.dist.add( this, "numDistalDend", 0, maxDistalDendrites, 1 )
-    //   .onChange( function( value ) {
-    //     numDistalDendrites = value;
-    //   } );
+    this.distal = this.addFolder('Distal');
+    this.distal.threshold = distalThreshold;
+	  this.distal.add( this.distal, "threshold", 1, 100, 1 )
+      .onChange( function( value ) {
+        distalThreshold = value;
+      } );
+    //------------------------------------
+    this.proximal = this.addFolder('Proximal');
+    this.proximal.threshold = proximalThreshold;
+	  this.proximal.add( this.proximal, "threshold", 1, 100, 1 )
+      .onChange( function( value ) {
+        proximalThreshold = value;
+      } );
   }
 };

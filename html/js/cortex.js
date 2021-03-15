@@ -1,7 +1,10 @@
+"use strict";
+
 //--------------------------------------------------------------------
 // Renders a view of the cortical columns, mini-columns, neurons, etc.
 //--------------------------------------------------------------------
 class Cortex extends THREE.Group {
+  //------------------------------------------------------------------
   constructor() {
     super();
     this.columns = [];
@@ -23,16 +26,20 @@ class Cortex extends THREE.Group {
         }
       }
     }
+    this.rotateY(-Math.PI/6);
   }
+  //------------------------------------------------------------------
   allowSaccades( flag ) {
     console.log("Cortex.allowSaccades(" + flag + ")");
   }
-  update(sensor) {
+  //------------------------------------------------------------------
+  update() {
     if (gui.saccade) {
       const dx = Math.random() - 0.5;
       const dy = Math.random() - 0.5;
       seqView.setMouse(seqView.x0 + dx, seqView.y0 + dy);
     }
+    const sensor = seqView.stencilData;
     this.columns.forEach( function(col,idx) {
       if (sensor && sensor[idx]) col.updateState(sensor[idx]);
     } );
