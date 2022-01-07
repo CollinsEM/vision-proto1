@@ -1,3 +1,11 @@
+class Filter extends Float32Array {
+  constructor(ni, nj) {
+    super(ni*nj);
+    this.ni = ni;
+    this.nj = nj;
+  }
+};
+
 class LogGaborFilter extends Array {
   constructor(numScales, filterWidth) { // NQ, NP, N) {
     super();
@@ -21,27 +29,26 @@ class LogGaborFilter extends Array {
     
     document.getElementById('atoms').appendChild(this.canvas);
     
-    this.G = [];                    // Filter bank
-    this.minG = 1e30;
-    this.maxG = -1e30;
+    const G = [];                    // Filter bank
+    var minG = 1e30;
+    var maxG = -1e30;
     const sra = 0.996*Math.sqrt(2/3); // standard deviation in ra
     const den1 = -0.5/(sra*sra);
     var ii = 0;
     for (var q=0; q<NQ; ++q) {
-      this.G[q] = [];   // Filter banks for the q'th scale
+      G[q] = [];   // Filter banks for the q'th scale
       const NP = (6*q || 1); // Number of filter orientations
       const r0 = Math.log2(NI) - q;
       const sth = 0.996*Math.PI/(Math.sqrt(2)*NP); // standard deviation in th
       const den2 = -0.5/(sth*sth);
       for (var p=0; p<NP; ++p) {
-        this.G[q][p] = new Array(NJ);
+        G[q][p] = new Filter(NI, NJ);
         const th0 = ( q%2 ? p : p+0.5 )*Math.PI/NP;
         const sinth0 = Math.sin(th0);
         const costh0 = Math.cos(th0);
-        for (var j=0; j<NJ; ++j) {
-          this.G[q][p][j] = new Float32Array(NI);
+        for (var j=0, n=0; j<NJ; ++j) {
           const y = j-NJ/2;
-          for (var i=0; i<NI; ++i) {
+          for (var i=0; i<NI; ++i, ++n) {
             const x = i-NI/2;
             const r = Math.sqrt(x**2 + y**2);
             const dr = r - r0;
@@ -55,45 +62,41 @@ class LogGaborFilter extends Array {
             const dth = Math.abs(Math.atan2(ds,dc));
             const Gth = Math.exp(dth*dth*den2);
             
-            const G = (q ? Gr*Gth : Math.exp(r*r*den1));
-            //const G = Gr*Gth;
-            this.G[q][p][j][i] = G;
-            this.minG = Math.min(this.minG, G);
-            this.maxG = Math.max(this.maxG, G);
+            G[q][p][n] = (q ? Gr*Gth : Math.exp(r*r*den1));
+            minG = Math.min(minG, G[q][p][n]);
+            maxG = Math.max(maxG, G[q][p][n]);
           }
         }
-        // console.log(this.G[q][p]);
-        // console.log(this.img[q][p]);
-        this.push(this.G[q][p]);
+        this.push(G[q][p]);
       }
     }
     this.lut = new THREE.Lut('cooltowarm', 256);
-    this.lut.setMin(this.minG);
-    this.lut.setMax(this.maxG);
+    this.lut.setMin(minG);
+    this.lut.setMax(maxG);
   }
   render() {
     const NI = this.filterWidth;
     const NJ = this.filterWidth;
-    const NQ = this.G.length;
+    const NQ = this.numScales;
     const W = this.canvas.width;
     const H = this.canvas.height;
     let data = new Uint8ClampedArray(4*W*H);
     for (var i=0; i<4*W*H; ++i) data[i] = 0;
-    for (var q=0; q<NQ; ++q) {
-      let NP = this.G[q].length;
+    for (var q=0, m=0; q<NQ; ++q) {
+      const NP = (6*q || 1); // Number of filter orientations
       let J0 = q*NJ; // Starting row index for q'th scale filter
       let I0 = Math.floor((W - NI*NP)/2); // Starting col index for q'th scale filter
-      for (var p=0; p<NP; ++p) {
-        for (var j=0; j<NJ; ++j) {
+      for (var p=0; p<NP; ++p, ++m) {
+        for (var j=0, n=0; j<NJ; ++j) {
           var jj = J0 + j;
-          for (var i=0; i<NI; ++i) {
+          for (var i=0; i<NI; ++i, ++n) {
             var ii = I0 + NI*p + i;
-            const color = this.lut.getColor(this.G[q][p][j][i]);
+            const color = this.lut.getColor(this[m][n]);
             // for (var a=0; a<3; ++a) data[4*((jj)*W+ii)+a] = 255;
             data[4*((jj)*W+ii)+0] = 255*color.r;
             data[4*((jj)*W+ii)+1] = 255*color.g;
             data[4*((jj)*W+ii)+2] = 255*color.b;
-            data[4*((jj)*W+ii)+3] = 255*this.G[q][p][j][i];
+            data[4*((jj)*W+ii)+3] = 255*this[m][n];
           }
         }
       }

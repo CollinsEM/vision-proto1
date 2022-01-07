@@ -43,8 +43,8 @@ class CortexView extends THREE.Scene {
 	  this.renderer = new THREE.WebGLRenderer( { antialias: true } );
 	  this.renderer.setPixelRatio( window.devicePixelRatio );
 	  this.renderer.setSize( window.innerWidth, window.innerHeight );
-	  this.renderer.gammaInput = true;
-	  this.renderer.gammaOutput = true;
+	  // this.renderer.gammaInput = true;
+	  // this.renderer.gammaOutput = true;
 	  container.appendChild( this.renderer.domElement );
 
 	  // this.stats = new Stats();
@@ -61,7 +61,7 @@ class CortexView extends THREE.Scene {
   }
   //------------------------------------------------------------------
   render() {
-	  // this.stats.update();
+	  if (this.stats) this.stats.update();
 	  this.renderer.render( this, this.camera );
   }
 };

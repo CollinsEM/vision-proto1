@@ -16,6 +16,7 @@ class SequenceView {
     this.seqContext = this.seqCanvas.getContext('2d');
     this.seqContext.imageSmoothingEnabled = false;
     document.getElementById('sequence').appendChild(this.seqCanvas);
+    canvasTexture = new THREE.CanvasTexture(this.seqCanvas);
 
     const W = (2*numColLoops+1)*14;
     this.outCanvas = document.createElement('canvas');
@@ -35,6 +36,7 @@ class SequenceView {
       this.getNewImage(num);
     }
 
+    this.background = null;
     this.seqUpdate = true;
     this.stencilData = [];
   }
@@ -83,8 +85,13 @@ class SequenceView {
     var R = numColLoops*gui.sensorRadius;
     this.x0 = Math.min(this.NJ*28-2*R,Math.max(2*R,x));
     this.y0 = Math.min(this.NI*28-sqrt3*R,Math.max(sqrt3*R,y));
-    // Request rendering update
-    this.seqUpdate = true;
+    this.updateSensor();
+  }
+  //--------------------------------------------------------------------
+  moveMouse(delta) {
+    const x = this.x0 + delta.x;
+    const y = this.y0 + delta.y;
+    this.setMouse(x, y);
   }
   //--------------------------------------------------------------------
   // Recieve image data buffer and convert to valid ImageData
@@ -116,14 +123,11 @@ class SequenceView {
         }
       }
       // Request rendering update
-      seqView.seqUpdate = true;
+      seqView.renderSeq();
     };
   }
   //--------------------------------------------------------------------
-  render() {
-    const R = Math.round(gui.sensorRadius);
-    const C = Math.floor((this.outCanvas.width-R)/2);
-    if (!this.seqUpdate) return;
+  renderSeq() {
     this.seqContext.clearRect(0, 0, this.seqCanvas.width, this.seqCanvas.height);
     // Render the current sequence
     for (var i=0; i<this.currSeq.length; ++i) {
@@ -133,6 +137,16 @@ class SequenceView {
         this.seqContext.putImageData(this.trainSet[i], x, y);
       }
     }
+    this.background = this.seqContext.getImageData(0, 0, this.seqCanvas.width, this.seqCanvas.height);
+    canvasTexture.needsUpdate = true;
+  }
+  render() {
+    if (this.background) this.seqContext.putImageData(this.background, 0, 0);
+    else this.renderSeq();
+  }
+  updateSensor() {
+    const R = Math.round(gui.sensorRadius);
+    const C = Math.floor((this.outCanvas.width-R)/2);
     // Save the image data under the current fovea stencil
     var x0 = this.x0;
     var y0 = this.y0;

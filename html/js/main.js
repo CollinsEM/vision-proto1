@@ -3,22 +3,24 @@
 const sqrt3 = Math.sqrt(3);
 
 var gui, seqView, inputView, outputView, cortexView, logGabor;
-var cortex;
+var cortex, canvasTexture;
 
-let numColLoops= 5;           // number of loops of columns to generate
-let maxColumns = 1;           // number of columns to generate
-for (var i=1; i<=numColLoops; ++i) maxColumns += i*6;
-let numColumns = maxColumns;  // number of columns currently visible
+let numColLoops= 3;             // number of loops of columns to generate
+let maxColumns = 1 + 6*numColLoops*(numColLoops+1)/2; // number of columns to generate
+// for (var i=1; i<=numColLoops; ++i) maxColumns += i*6;
+let numColumns = maxColumns;    // number of columns currently visible
 let colRadius = 400;
 let colHeight = 800;
 let maxSensorRadius = 7;
 
-var numMCLoops = 2;           // number of loops of minicolumns to generate
+var numMCLoops = 2;             // number of loops of minicolumns to generate
 var maxMiniCols= 1 + 6*numMCLoops*(numMCLoops+1)/2;// Maximum number of minicolumns
 
 
-var maxNeurons = 3*91;        // number of neurons per minicolumn to generate
-var numNeurons =  8;          // number of neurons per minicolumn currently visible
+var maxNeurons = 4;             // number of neurons per minicolumn to generate
+var numNeurons =  maxNeurons/2; // number of neurons per minicolumn currently visible
+var biasAmplitude = 0.25;
+var biasColor = new THREE.Color(biasAmplitude, biasAmplitude, biasAmplitude);
 
 // this.maxProximalDistance = r/4;
 // this.numProximalDendrites = 4;
@@ -41,6 +43,9 @@ var apicalLayer     = 6;
 
 window.addEventListener( 'load', init, false );
 window.addEventListener( 'resize', onWindowResize, false );
+window.addEventListener( 'mouseup', onMouseUp, false );
+window.addEventListener( 'mousedown', onMouseDown, false );
+// window.addEventListener( 'mousemove', onMouseMove, false );
 
 //--------------------------------------------------------------------
 function init() {
@@ -63,27 +68,41 @@ function init() {
 }
 //--------------------------------------------------------------------
 function onWindowResize() {
-  cortexView.resize();
+  if (cortexView) cortexView.resize();
 }
+//--------------------------------------------------------------------
+let doUpdate = false;
+function onMouseUp() { doUpdate = false; }
+//--------------------------------------------------------------------
+function onMouseDown() { doUpdate = true; }
+//--------------------------------------------------------------------
+function onMouseMove() { if (doUpdate) render(); }
 //--------------------------------------------------------------------
 // var frame = 0;
 function animate() {
   // Schedule the next screen refresh
 	if (gui.animate) requestAnimationFrame( animate );
-  else cortex.update();
+  render();
+}
+//--------------------------------------------------------------------
+const clock = new THREE.Clock();
+let stime = 0;
+function render() {
+  const dt = clock.getDelta();
+  stime += dt;
+  // Render filters
+  logGabor.render();
   // Render the current sequence of MNIST numbers. This method only
   // renders the MNIST digits without the stencil. The raw image data
   // under the stencil is then queried in the cortex.update() method.
   seqView.render();
   inputView.render();
   // Update the cortex state using the current sensor data.
-  cortex.update();
+  cortex.update(dt);
   // Render the current attention stencil in the sequence view after
   // data has been received by the cortex update.
   seqView.renderStencil();
   // Render the cortex visualization.
 	cortexView.render();
-  // Render filters
-  logGabor.render();
 }
 

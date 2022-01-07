@@ -21,27 +21,48 @@ class Cortex extends THREE.Group {
 		      col = new Column(colRadius, colHeight, numMCLoops, ii);
    	      col.translateX(rad*Math.cos(th));
 		      col.translateZ(rad*Math.sin(th));
+          col.visible = ii<gui.numColumns;
           this.columns.push(col);
           this.add(col);
         }
       }
     }
     this.rotateY(-Math.PI/6);
+    this.saccade = gui.saccade;
+    this.saccadeDelay = 0.3;
+    this.lastSaccade = 0;
+    this.columns.forEach( function(col, idx) {
+      col.miniColumns.forEach( function(mc, i) {
+        mc.pos = new THREE.Vector3(0,0,0);
+        mc.getWorldPosition(mc.pos);
+      } );
+    } );
   }
   //------------------------------------------------------------------
+  // For debugging. This will eventually always be true.
   allowSaccades( flag ) {
-    console.log("Cortex.allowSaccades(" + flag + ")");
+    this.saccade = flag;
   }
   //------------------------------------------------------------------
-  update() {
-    if (gui.saccade) {
-      const dx = Math.random() - 0.5;
-      const dy = Math.random() - 0.5;
-      seqView.setMouse(seqView.x0 + dx, seqView.y0 + dy);
+  // TODO: Replace this with self-directed attention
+  getSaccade() {
+    return { x: Math.random() - 0.5,
+             y: Math.random() - 0.5 };
+  }
+  //------------------------------------------------------------------
+  // Perform an update on the cortex state
+  update(dt) {
+    if (this.saccade) {
+      this.lastSaccade += dt;
+      if (this.lastSaccade > this.saccadeDelay) {
+        this.lastSaccade -= this.saccadeDelay;
+        seqView.moveMouse(this.getSaccade());
+      }
     }
     const sensor = seqView.stencilData;
-    this.columns.forEach( function(col,idx) {
-      if (sensor && sensor[idx]) col.updateState(sensor[idx]);
+    const colData = this.columns.slice(0, gui.numColumns);
+    colData.forEach( function(col,idx) {
+      if (sensor && sensor[idx]) col.updateState(sensor[idx], dt);
     } );
   }
 }
