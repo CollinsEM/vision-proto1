@@ -1,5 +1,14 @@
 "use strict";
 
+// number of neurons per minicolumn to generate
+const maxNeurons = 32;
+// number of neurons per minicolumn currently visible
+var numNeurons = 16;
+// number of loops of minicolumns to generate
+const numMCLoops = 2;
+// Maximum number of minicolumns
+const maxMiniCols= 1 + 6*numMCLoops*(numMCLoops+1)/2;
+
 var maxProximalDendrites = 1;
 var maxProximalSegments = 32;
 var maxDistalDendrites = 1;
@@ -7,6 +16,8 @@ var maxDistalSegments = 32;
 var maxDistalSynapses = 32;
 var maxApicalDendrites = 1;
 var maxApicalSegments = 32;
+
+const spark = new THREE.TextureLoader().load( "textures/sprites/spark1.png" );
 
 //--------------------------------------------------------------------
 // Material to be applied to synaptic connections
@@ -16,39 +27,33 @@ var synapseMat = new THREE.LineBasicMaterial( {
 	transparent: true
 } );
 //--------------------------------------------------------------------
-// Shader uniform variables
-var uniforms = {
-	color:   {
-    value: new THREE.Color( 0xffffff )
-  },
-	texture: {
-    value: new THREE.TextureLoader().load( "textures/sprites/spark1.png" )
-  }
-};
-//--------------------------------------------------------------------
 // Material to be applied to neurons
-var neuronMat = new THREE.ShaderMaterial( {
-	uniforms: uniforms,
-  // vertexShader: document.getElementById( 'neuronVertShader' ).textContent,
-	vertexShader: " \
-    attribute float size; \
-    attribute vec3 customColor; \
-	  varying vec3 vColor; \
-	  void main() { \
-      vColor = customColor; \
-      vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); \
-      gl_PointSize = size * ( 300.0 / -mvPosition.z ); \
-      gl_Position = projectionMatrix * mvPosition; \
-    }",
-	// fragmentShader: document.getElementById( 'neuronFragShader' ).textContent,
-  fragmentShader: " \
-		 uniform vec3 color; \
-		 uniform sampler2D texture; \
-		 varying vec3 vColor; \
-		 void main() { \
-			 gl_FragColor = vec4( color * vColor, 1.0 ); \
-			 gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord ); \
-		 }",
+const neuronMat = new THREE.ShaderMaterial( {
+	uniforms: {
+	  color:   { value: new THREE.Color( 0xffffff ) },
+	  // texture: { value: new THREE.TextureLoader().load( "textures/sprites/spark1.png" ) },
+    alphaTest: { value: 0.1 }
+  },
+  vertexShader: document.getElementById( 'neuronVertShader' ).textContent,
+	// vertexShader: " \
+  //   attribute float size; \
+  //   attribute vec3 customColor; \
+	//   varying vec3 vColor; \
+	//   void main() { \
+  //     vColor = customColor; \
+  //     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); \
+  //     gl_PointSize = size * ( 300.0 / -mvPosition.z ); \
+  //     gl_Position = projectionMatrix * mvPosition; \
+  //   }",
+  fragmentShader: document.getElementById( 'neuronFragShader' ).textContent,
+  // fragmentShader: " \
+	// 	 uniform vec3 color; \
+	// 	 uniform sampler2D texture; \
+	// 	 varying vec3 vColor; \
+	// 	 void main() { \
+	// 		 gl_FragColor = vec4( color * vColor, 1.0 ); \
+	// 		 gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord ); \
+	// 	 }",
 	blending:       THREE.AdditiveBlending,
 	depthTest:      false,
 	transparent:    true
@@ -59,7 +64,7 @@ class MiniColumn extends THREE.Group {
     super();
     this.lo = new THREE.Color(0x101010); // (0x808080);
     this.hi = new THREE.Color(0xFFFFFF);
-    this.bias = biasColor.clone();
+    this.biasColor = biasColor.clone();
     this.parent = parent;
     this.name   = parent.name + ":MC#" + idx.toString();
     this.radius = radius;
@@ -68,12 +73,12 @@ class MiniColumn extends THREE.Group {
     this.filter = filter || logGabor[idx];
     this.geom = new THREE.CylinderGeometry( radius, radius, height/20, 6, 1);
     this.mat  = new THREE.MeshBasicMaterial( { color: 0x000000,
-                                               // color: 0x404040,
+                                               // color: 0x040404,
                                                // blending: THREE.AdditiveBlending,
                                                // wireframe: true,
                                                side: THREE.DoubleSide,
                                                transparent: true,
-                                               opacity: gui.opacity });
+                                               opacity: gui.miniColumn.opacity });
     this.helper = new THREE.Mesh(this.geom, this.mat);
     this.helper.layers.set(miniColumnLayer);
     // this.helper.rotateY(Math.PI/6);
@@ -100,15 +105,15 @@ class MiniColumn extends THREE.Group {
   updateState(data, dt) {
     const omega = 5;
     const phi0 = this.pos.x;
-    const bias = 0.5 + 0.5*Math.sin(omega*stime + phi0);
-    this.bias.set(biasColor).multiplyScalar(bias);
+    const bias = gui.biasAmplitude*(0.5 + 0.5*Math.sin(omega*stime + phi0));
+    this.biasColor.set(biasColor).multiplyScalar(bias);
     this.computePrediction(bias, dt);
     this.computeActivation(bias, dt, data);
   }
   //--------------------------------------------------------------------
   // Update the distal activations for all neurons in this MC
   computePrediction(bias, dt) {
-    const mcData = this.neuronData.slice(0, gui.numNeurons);
+    const mcData = this.neuronData.slice(0, gui.neuron.count);
     var distMin  = [ 1000, 1000, 1000]; // Minimum distal activations
     var distMax  = [-1000,-1000,-1000]; // Maximum distal activations
     var distIdx  = [-1,-1,-1];
@@ -140,7 +145,7 @@ class MiniColumn extends THREE.Group {
     const G  = this.filter;
     const NI = logGabor.filterWidth; // Width of filter (in pixels)
     const NJ = logGabor.filterWidth; // Height of filter (in pixels)
-    const R  = Math.round(gui.sensorRadius);
+    const R  = Math.round(gui.retinaScale);
     const NX = 2*R+1; // Width of receptive field on data patch (in pixels)
     const NY = 2*R+1; // Height of receptive field on data patch (in pixels)
     var prox = [ bias, bias, bias ]; // accumlate activations in each color channel
@@ -162,9 +167,9 @@ class MiniColumn extends THREE.Group {
     this.hi.setRGB((this.prox[0]-colMin)*rden,
                    (this.prox[1]-colMin)*rden,
                    (this.prox[2]-colMin)*rden);
-    this.mat.color.addColors(this.bias, this.hi);
+    this.mat.color.addColors(this.biasColor, this.hi);
     this.activated = true;
-    const mcData = this.neuronData.slice(0, gui.numNeurons);
+    const mcData = this.neuronData.slice(0, gui.neuron.count);
     mcData.forEach( function( iData, i ) {
       iData.activation = this.prox;
     }, this );
@@ -174,14 +179,14 @@ class MiniColumn extends THREE.Group {
   decay() {
     for (var z=0; z<3; ++z) this.prox[z] *= 0.95;
     this.hi.lerp(this.lo, 0.05);
-    this.mat.color.addColors(this.bias, this.hi);
+    this.mat.color.addColors(this.biasColor, this.hi);
   }
   //--------------------------------------------------------------------
   // Activate all neurons to show column bursting
   burst() {
 	  const col = this.neuronCol; // Array of neuron colors
 	  const siz = this.neuronSiz; // Array of neuron sizes
-    const mcData = this.neuronData.slice(0, gui.numNeurons);
+    const mcData = this.neuronData.slice(0, gui.neuron.count);
     mcData.forEach( function( iData, i ) { // Update all neurons in this MC
       col[3*i+0] = 1.0;
       col[3*i+1] = 0.2;
@@ -199,7 +204,7 @@ class MiniColumn extends THREE.Group {
 	  const siz = this.neuronSiz; // Array of neuron sizes
     //------------------------------------------------------------------
     // Update the neuron display based on activations and predicitons
-    const mcData = this.neuronData.slice(0, gui.numNeurons);
+    const mcData = this.neuronData.slice(0, gui.neuron.count);
     mcData.forEach( function( iData, i ) { // Update all neurons in this MC
       const z = iData.channel;
       if (siz[i] >= 10) {
@@ -243,7 +248,7 @@ class MiniColumn extends THREE.Group {
   //------------------------------------------------------------------
   // Train distal synapses if nodes are active without being predicted
   trainDistal() {
-    const mcData = this.neuronData.slice(0, gui.numNeurons);
+    const mcData = this.neuronData.slice(0, gui.neuron.count);
     mcData.forEach( function( iData, i ) { // Update all neurons in this MC
       iData.trainDistal(this.activated, this.predicted);
     }, this );
@@ -290,7 +295,7 @@ class MiniColumn extends THREE.Group {
 	  this.neuronGeom.setAttribute( 'position',    this.posAttrib );
     this.neuronGeom.setAttribute( 'customColor', this.colAttrib );
     this.neuronGeom.setAttribute( 'size',        this.sizAttrib );
-	  this.neuronGeom.setDrawRange( 0, gui.numNeurons );
+	  this.neuronGeom.setDrawRange( 0, gui.neuron.count );
     this.neuronGeom.computeBoundingSphere();
   
 	  this.points = new THREE.Points( this.neuronGeom, neuronMat );
@@ -326,6 +331,7 @@ class MiniColumn extends THREE.Group {
   //--------------------------------------------------------------------
   initDistalDendrite() {
     if (this.distal.length >= maxDistalDendrites) return false;
+    var size = maxNeurons * maxDistalDendrites * maxDistalSegments * 6;
     
     var pos = new THREE.BufferAttribute( new Float32Array( size ), 3 )
         .setUsage( THREE.DynamicDrawUsage );
@@ -346,6 +352,7 @@ class MiniColumn extends THREE.Group {
   //--------------------------------------------------------------------
   initApicalDendrite() {
     if (this.apical.length == maxApicalDendrites) return false;
+    var size = maxNeurons * maxApicalDendrites * maxApicalSegments * 6;
     
     var pos = new THREE.BufferAttribute( new Float32Array( size ), 3 )
         .setUsage( THREE.DynamicDrawUsage );

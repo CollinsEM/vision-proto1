@@ -5,8 +5,9 @@
 //--------------------------------------------------------------------
 class Cortex extends THREE.Group {
   //------------------------------------------------------------------
-  constructor() {
+  constructor(sensorPatch) {
     super();
+    this.sensorPatch = sensorPatch;
     this.columns = [];
 	  var col = new Column(colRadius, colHeight, numMCLoops, 0)
     this.columns.push(col);
@@ -21,16 +22,17 @@ class Cortex extends THREE.Group {
 		      col = new Column(colRadius, colHeight, numMCLoops, ii);
    	      col.translateX(rad*Math.cos(th));
 		      col.translateZ(rad*Math.sin(th));
-          col.visible = ii<gui.numColumns;
+          col.visible = ii<gui.column.count;
           this.columns.push(col);
           this.add(col);
         }
       }
     }
     this.rotateY(-Math.PI/6);
-    this.saccade = gui.saccade;
-    this.saccadeDelay = 0.3;
-    this.lastSaccade = 0;
+    this.enableMotor = gui.shiftFocus;
+    this.motorDelay = 0.3;
+    this.sinceLastShift = 0;
+    
     this.columns.forEach( function(col, idx) {
       col.miniColumns.forEach( function(mc, i) {
         mc.pos = new THREE.Vector3(0,0,0);
@@ -39,30 +41,33 @@ class Cortex extends THREE.Group {
     } );
   }
   //------------------------------------------------------------------
-  // For debugging. This will eventually always be true.
-  allowSaccades( flag ) {
-    this.saccade = flag;
+  // Update sensor position based on motor control feedback
+  updateMotor(dt) {
+    this.sinceLastShift += dt;
+    if (this.sinceLastShift > this.motorDelay) {
+      this.sinceLastShift -= this.motorDelay;
+      seqView.moveMouse(this.getMovement());
+    }
   }
   //------------------------------------------------------------------
-  // TODO: Replace this with self-directed attention
-  getSaccade() {
-    return { x: Math.random() - 0.5,
-             y: Math.random() - 0.5 };
+  // Update cortex state based on sensor input
+  updateSensor(dt) {
+    const data = this.sensorPatch;
+    const colData = this.columns.slice(0, gui.column.count);
+    colData.forEach( function(col,idx) {
+      if (data && data[idx]) col.updateState(data[idx], dt);
+    } );
   }
   //------------------------------------------------------------------
   // Perform an update on the cortex state
   update(dt) {
-    if (this.saccade) {
-      this.lastSaccade += dt;
-      if (this.lastSaccade > this.saccadeDelay) {
-        this.lastSaccade -= this.saccadeDelay;
-        seqView.moveMouse(this.getSaccade());
-      }
-    }
-    const sensor = seqView.stencilData;
-    const colData = this.columns.slice(0, gui.numColumns);
-    colData.forEach( function(col,idx) {
-      if (sensor && sensor[idx]) col.updateState(sensor[idx], dt);
-    } );
+    if (this.enableMotor) this.updateMotor(dt);
+    if (this.sensorPatch) this.updateSensor(dt);
+  }
+  //------------------------------------------------------------------
+  // TODO: Replace this with self-directed attention
+  getMovement() {
+    return { x: Math.random() - 0.5,
+             y: Math.random() - 0.5 };
   }
 }

@@ -2,37 +2,14 @@
 
 const sqrt3 = Math.sqrt(3);
 
-var gui, seqView, inputView, outputView, cortexView, logGabor;
-var cortex, canvasTexture;
+// Scale factor for retinal sensors
+const maxSensorRadius = 7;
 
-let numColLoops= 3;             // number of loops of columns to generate
-let maxColumns = 1 + 6*numColLoops*(numColLoops+1)/2; // number of columns to generate
-// for (var i=1; i<=numColLoops; ++i) maxColumns += i*6;
-let numColumns = maxColumns;    // number of columns currently visible
-let colRadius = 400;
-let colHeight = 800;
-let maxSensorRadius = 7;
+var canvasTexture, inputView, cortex, logGabor;
+var gui, seqView, cortexView, retinaL, retinaR;
 
-var numMCLoops = 2;             // number of loops of minicolumns to generate
-var maxMiniCols= 1 + 6*numMCLoops*(numMCLoops+1)/2;// Maximum number of minicolumns
-
-
-var maxNeurons = 4;             // number of neurons per minicolumn to generate
-var numNeurons =  maxNeurons/2; // number of neurons per minicolumn currently visible
 var biasAmplitude = 0.25;
 var biasColor = new THREE.Color(biasAmplitude, biasAmplitude, biasAmplitude);
-
-// this.maxProximalDistance = r/4;
-// this.numProximalDendrites = 4;
-// this.maxProximalDendrites = 10;
-
-// this.minDistalDistance = r/8;
-// this.maxDistalDistance = r/2;
-// this.numDistalDendrites = 1;
-// this.maxDistalDendrites = 6;
-
-// this.numDendriteSegments = 20;
-
 
 var columnLayer = 1;
 var miniColumnLayer = 2;
@@ -45,31 +22,38 @@ window.addEventListener( 'load', init, false );
 window.addEventListener( 'resize', onWindowResize, false );
 window.addEventListener( 'mouseup', onMouseUp, false );
 window.addEventListener( 'mousedown', onMouseDown, false );
-// window.addEventListener( 'mousemove', onMouseMove, false );
+window.addEventListener( 'mousemove', onMouseMove, false );
 
 //--------------------------------------------------------------------
 function init() {
+  // Convolutional input filters for each minicolumn
   logGabor = new LogGaborFilter(numMCLoops+1, 2*maxSensorRadius+1);
-  // For static filters, we should only need to do this once.
-  // logGabor.render();
+  // Init global parameters to control the visualization
+	gui = new GUI();
+  // Init main window view of cortical columns
+  cortexView = new CortexView();
+  // Init inset window view of input field of view
+  seqView = new SequenceView(gui.seq.NI, gui.seq.NJ);
+  // Init left retina sensors
+  retinaL = new RetinaPatch(-gui.eyeSep, 0, maxColumns, seqView);
+  retinaL.translateY( 0.55*colHeight);
+  cortexView.add(retinaL);
+  // Init right retina sensors
+  retinaR = new RetinaPatch( gui.eyeSep, 0, maxColumns, seqView);
+  retinaR.translateY(-0.55*colHeight);
+  cortexView.add(retinaR);
+  // Init cortical patches attached to each retina
+  cortex  = new Cortex();
+  cortex.translateY(-1.55*colHeight);
+  cortexView.add(cortex);
   
-  gui = new GUI();
-  
-  seqView = new SequenceView(gui.NI, gui.NJ);
-  inputView = new GatedInputView();
-  cortex = new Cortex();
-  cortexView = new CortexView(cortex);
-  
-  console.log("Number of columns generated", maxColumns);
-  console.log("Number of mini-columns per column", maxMiniCols);
-  console.log("Number of neurons per mini-column", numNeurons);
-  
+  // inputView = new GatedInputView();
+
+  // Begin main loop
   animate();
 }
 //--------------------------------------------------------------------
-function onWindowResize() {
-  if (cortexView) cortexView.resize();
-}
+function onWindowResize() { if (cortexView) cortexView.resize(); }
 //--------------------------------------------------------------------
 let doUpdate = false;
 function onMouseUp() { doUpdate = false; }
@@ -78,9 +62,8 @@ function onMouseDown() { doUpdate = true; }
 //--------------------------------------------------------------------
 function onMouseMove() { if (doUpdate) render(); }
 //--------------------------------------------------------------------
-// var frame = 0;
+// Schedule the next screen refresh
 function animate() {
-  // Schedule the next screen refresh
 	if (gui.animate) requestAnimationFrame( animate );
   render();
 }
@@ -90,19 +73,25 @@ let stime = 0;
 function render() {
   const dt = clock.getDelta();
   stime += dt;
-  // Render filters
-  logGabor.render();
   // Render the current sequence of MNIST numbers. This method only
-  // renders the MNIST digits without the stencil. The raw image data
-  // under the stencil is then queried in the cortex.update() method.
+  // renders the MNIST digits without the retina stencil overlay
   seqView.render();
-  inputView.render();
-  // Update the cortex state using the current sensor data.
+  // Extract the raw image data under the retina stencil.
+  retinaL.update(dt);
+  retinaR.update(dt);
+  // Update the V1 cortex state using the current sensor data.
   cortex.update(dt);
-  // Render the current attention stencil in the sequence view after
-  // data has been received by the cortex update.
-  seqView.renderStencil();
+  // Generate saccade if necessary
+  // retinaL.updateMotor(dt);
+  // retinaR.updateMotor(dt);
   // Render the cortex visualization.
 	cortexView.render();
+  // Render the current attention stencil in the sequence view.
+  retinaL.renderStencil("yellow");
+  retinaR.renderStencil("cyan");
+  // Render filters
+  // logGabor.render();
+
+  // inputView.render();
 }
 

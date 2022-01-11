@@ -10,8 +10,8 @@ class Neuron {
     this.prox = new DendriteSegment(this);
     this.dist = [ ];
     this.apic = [ ];
-    this.distView = new DendriteView();
-    this.apicView = new DendriteView();
+    // this.distView = new DendriteView(gui.distal.numSegs);
+    // this.apicView = new DendriteView(gui.apical.numSegs);
     this.activation = 0;
     this.distalActivation = 0;
     this.apicalActivation = 0;
@@ -63,7 +63,7 @@ class Neuron {
       }
       else { // minicolumn has burst, look for other co-activated neurons
         const M = maxMiniCols;
-        const N = gui.numNeurons;
+        const N = gui.neuron.count;
         // If no dendrite segments exist, grow a new one.
         if (this.dist.length < gui.distal.numSegments) {
           // Attempt to populate dendrite segment with active neurons in

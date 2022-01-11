@@ -14,26 +14,26 @@ class CortexView extends THREE.Scene {
 	  this.camera.position.x = 0;
 	  this.camera.position.y = 10000;
 	  this.camera.position.z = 0;
-    if (gui.showNeurons)
+    if (gui.neuron.show)
       this.camera.layers.enable(neuronLayer);
     else
       this.camera.layers.disable(neuronLayer);
-    if (gui.showColumns)
+    if (gui.column.show)
       this.camera.layers.enable(columnLayer);
     else
       this.camera.layers.disable(columnLayer);
-    if (gui.showMiniColumns)
+    if (gui.miniColumn.show)
       this.camera.layers.enable(miniColumnLayer);
     else
       this.camera.layers.disable(miniColumnLayer);
-    if (gui.showProximal)
+    if (gui.proximal.show)
       this.camera.layers.enable(proximalLayer);
     else
       this.camera.layers.disable(proximalLayer);
-    if (gui.showDistal)
+    if (gui.distal.show)
       this.camera.layers.enable(distalLayer);
     else this.camera.layers.disable(distalLayer);
-    if (gui.showApical)
+    if (gui.apical.show)
       this.camera.layers.enable(apicalLayer);
     else
       this.camera.layers.disable(apicalLayer);
@@ -43,15 +43,10 @@ class CortexView extends THREE.Scene {
 	  this.renderer = new THREE.WebGLRenderer( { antialias: true } );
 	  this.renderer.setPixelRatio( window.devicePixelRatio );
 	  this.renderer.setSize( window.innerWidth, window.innerHeight );
-	  // this.renderer.gammaInput = true;
-	  // this.renderer.gammaOutput = true;
 	  container.appendChild( this.renderer.domElement );
 
 	  // this.stats = new Stats();
 	  // container.appendChild( this.stats.dom );
-    
-    this.cortex = cortex;
-    this.add( this.cortex );
   }
   //------------------------------------------------------------------
   resize() {

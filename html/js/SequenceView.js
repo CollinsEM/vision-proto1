@@ -1,31 +1,28 @@
+"use strict";
+
 class SequenceView {
   /// @ni Number of rows of digits to display
   /// @nj Number of columns of digits to display
   constructor(ni, nj) {
+    // Number of rows and columns of digits
     this.NI = ni;
     this.NJ = nj;
-    this.x0 = this.NJ*14; // Center the stencil
+    // Current focus (center of attention)
+    this.x0 = this.NJ*14;
     this.y0 = this.NI*14;
+    // Enable movement of focus
+    this.enableMotor = gui.shiftFocus;
     
-    this.seqCanvas = document.createElement('canvas');
-    this.seqCanvas.id = 'sequenceView';
-    this.seqCanvas.width = this.NJ*28;
-    this.seqCanvas.height = this.NI*28;
-    this.seqCanvas.addEventListener('mousedown', this.onMouseDown(this));
-    this.seqCanvas.addEventListener('mousemove', this.onMouseMove(this));
-    this.seqContext = this.seqCanvas.getContext('2d');
-    this.seqContext.imageSmoothingEnabled = false;
-    document.getElementById('sequence').appendChild(this.seqCanvas);
-    canvasTexture = new THREE.CanvasTexture(this.seqCanvas);
-
-    const W = (2*numColLoops+1)*14;
-    this.outCanvas = document.createElement('canvas');
-    this.outCanvas.id = 'outputView';
-    this.outCanvas.width = W;
-    this.outCanvas.height = W;
-    this.outContext = this.outCanvas.getContext('2d');
-    this.outContext.imageSmoothingEnabled = false;
-    document.getElementById('gatedOutput').appendChild(this.outCanvas);
+    this.canvas = document.createElement('canvas');
+    this.canvas.id = 'seqView';
+    this.canvas.width = this.NJ*28;
+    this.canvas.height = this.NI*28;
+    this.canvas.addEventListener('mousedown', this.onMouseDown(this));
+    this.canvas.addEventListener('mousemove', this.onMouseMove(this));
+    this.context = this.canvas.getContext('2d');
+    this.context.imageSmoothingEnabled = false;
+    
+    document.getElementById('sequence').appendChild(this.canvas);
     
     this.currSeq = [];
     var N = this.NI*this.NJ;
@@ -36,9 +33,8 @@ class SequenceView {
       this.getNewImage(num);
     }
 
-    this.background = null;
-    this.seqUpdate = true;
-    this.stencilData = [];
+    this.cache = null;
+    this.needsUpdate = true;
   }
   //--------------------------------------------------------------------
   getNewImage(num) {
@@ -61,8 +57,8 @@ class SequenceView {
         this.getNewImage(num);
       }
     }
-    this.seqCanvas.height = ni*28;
-    this.seqCanvas.width = nj*28;
+    this.canvas.height = ni*28;
+    this.canvas.width = nj*28;
     this.NI = ni;
     this.NJ = nj;
   }
@@ -82,10 +78,15 @@ class SequenceView {
   }
   //--------------------------------------------------------------------
   setMouse(x, y) {
-    var R = numColLoops*gui.sensorRadius;
-    this.x0 = Math.min(this.NJ*28-2*R,Math.max(2*R,x));
-    this.y0 = Math.min(this.NI*28-sqrt3*R,Math.max(sqrt3*R,y));
-    this.updateSensor();
+    const R = numColLoops*(2*gui.retinaScale+1);
+    const xMin = Math.min(retinaL.x0-2*R, retinaR.x0+2*R);
+    const xMax = Math.max(retinaL.x0-2*R, retinaR.x0+2*R);
+    const yMin = Math.min(retinaL.y0-2*R, retinaR.y0+2*R);
+    const yMax = Math.max(retinaL.y0-2*R, retinaR.y0+2*R);
+    this.x0 = Math.min(this.NJ*28-xMax, Math.max(-xMin,x));
+    this.y0 = Math.min(this.NI*28-yMax, Math.max(-yMin,y));
+    // this.x0 = Math.min(this.NJ*28-2*R,Math.max(2*R,x));
+    // this.y0 = Math.min(this.NI*28-sqrt3*R,Math.max(sqrt3*R,y));
   }
   //--------------------------------------------------------------------
   moveMouse(delta) {
@@ -123,85 +124,30 @@ class SequenceView {
         }
       }
       // Request rendering update
-      seqView.renderSeq();
+      seqView.needsUpdate = true;
     };
   }
   //--------------------------------------------------------------------
   renderSeq() {
-    this.seqContext.clearRect(0, 0, this.seqCanvas.width, this.seqCanvas.height);
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    this.context.clearRect(0, 0, W, H);
     // Render the current sequence
     for (var i=0; i<this.currSeq.length; ++i) {
       if (this.trainSet[i] !== undefined) {
         var x = parseInt(28*(i%this.NJ));
         var y = parseInt(28*Math.floor(i/this.NJ));
-        this.seqContext.putImageData(this.trainSet[i], x, y);
+        this.context.putImageData(this.trainSet[i], x, y);
       }
     }
-    this.background = this.seqContext.getImageData(0, 0, this.seqCanvas.width, this.seqCanvas.height);
-    canvasTexture.needsUpdate = true;
+    this.cache = this.context.getImageData(0, 0, W, H);
   }
+  //--------------------------------------------------------------------
+  // Render the current input sequence to the canvas element
   render() {
-    if (this.background) this.seqContext.putImageData(this.background, 0, 0);
-    else this.renderSeq();
-  }
-  updateSensor() {
-    const R = Math.round(gui.sensorRadius);
-    const C = Math.floor((this.outCanvas.width-R)/2);
-    // Save the image data under the current fovea stencil
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var ii = 0;
-    if (ii<gui.numColumns) {
-      const img = this.captureNode(x0, y0);
-      this.stencilData[ii++] = img.data;
-    }
-	  for (var i=1; i<=numColLoops && ii<gui.numColumns; ++i) {
-      for (var j=1; j<=i && ii<gui.numColumns; ++j) {
-        var x1 = (2*i-j)*sqrt3/2;
-        var y1 = (j*3/2);
-        var rad = R*Math.sqrt(x1*x1 + y1*y1);
-        var ang = Math.atan2(y1, x1);
-        for (var k=0, th=ang; k<6 && ii<gui.numColumns; ++k, th+=Math.PI/3) {
-          const x = Math.floor(x0 + rad*Math.cos(th));
-          const y = Math.floor(y0 + rad*Math.sin(th));
-          const img = this.captureNode(x, y);
-          this.stencilData[ii++] = img.data;
-        }
-      }
-    }
-  }
-  //--------------------------------------------------------------------
-  renderStencil() {
-    const R = Math.round(gui.sensorRadius);
-    this.seqContext.strokeStyle = "green";
-    this.seqContext.lineWidth = 1;
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var ii = 0;
-    if (ii++<gui.numColumns) this.renderNode(x0, y0);
-	  for (var i=1; i<=numColLoops && ii<gui.numColumns; ++i) {
-      for (var j=1; j<=i && ii<gui.numColumns; ++j) {
-        var x1 = (2*i-j)*sqrt3/2;
-        var y1 = (j*3/2);
-        var rad = R*Math.sqrt(x1*x1 + y1*y1);
-        var ang = Math.atan2(y1, x1);
-        for (var k=0, th=ang; k<6 && ii<gui.numColumns; ++k, ++ii, th+=Math.PI/3) {
-          this.renderNode(x0 + rad*Math.cos(th), y0 + rad*Math.sin(th));
-        }
-      }
-    }
-  }
-  //--------------------------------------------------------------------
-  renderNode(x, y) {
-    const R = Math.round(gui.sensorRadius);
-    this.seqContext.beginPath();
-    this.seqContext.ellipse(x, y, R, R, 0, 0, 2*Math.PI);
-    this.seqContext.stroke();
-  }
-  //--------------------------------------------------------------------
-  captureNode(x, y) {
-    const R = Math.round(gui.sensorRadius);
-    return this.seqContext.getImageData(x-R, y-R, 2*R+1, 2*R+1);
+    // this.cache holds an ImageData object of the current state
+    if (this.needsUpdate || this.cache === null) this.renderSeq();
+    this.context.putImageData(this.cache, 0, 0);
   }
 };
 

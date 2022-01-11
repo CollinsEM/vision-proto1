@@ -51,6 +51,32 @@
          width: 33%
      }
 		</style>
+    <script type="x-shader/x-vertex" id="neuronVertShader">
+		  attribute float size;
+		  attribute vec3 customColor;
+		  varying vec3 vColor;
+		  void main() {
+			  vColor = customColor;
+			  vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+			  gl_PointSize = size * ( 300.0 / -mvPosition.z );
+			  gl_Position = projectionMatrix * mvPosition;
+		  }
+		</script>
+		<script type="x-shader/x-fragment" id="neuronFragShader">
+		  uniform vec3 color;
+		  // uniform sampler2D texture;
+      uniform float alphaTest;
+		  varying vec3 vColor;
+		  void main() {
+        vec2 p = gl_PointCoord;
+        float x = (p.x - 0.5);
+        float y = (p.y - 0.5);
+        float mag = 0.01/(x*x + y*y);
+			  gl_FragColor = mag* vec4( color * vColor, 1.0 );
+			  // gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+        if ( mag < alphaTest ) discard;
+		  }
+		</script>
 		<script src="js/libs/dat.gui.min.js"></script>
 		<script src="js/libs/stats.min.js"></script>
 		<script src="js/libs/three.min.js"></script>
@@ -69,26 +95,6 @@
 		<script src="js/column.js"></script>
     <script src="js/cortex.js"></script>
 		<script src="js/main.js"></script>
-    <!-- <script type="x-shader/x-vertex" id="neuronVertShader">
-		     attribute float size;
-		     attribute vec3 customColor;
-		     varying vec3 vColor;
-		     void main() {
-			   vColor = customColor;
-			   vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-			   gl_PointSize = size * ( 300.0 / -mvPosition.z );
-			   gl_Position = projectionMatrix * mvPosition;
-		     }
-		     </script>
-		     <script type="x-shader/x-fragment" id="neuronFragShader">
-		     uniform vec3 color;
-		     uniform sampler2D texture;
-		     varying vec3 vColor;
-		     void main() {
-			   gl_FragColor = vec4( color * vColor, 1.0 );
-			   gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
-		     }
-		     </script> -->
 	</head>
 	<body>
     <div id="sequence"></div>

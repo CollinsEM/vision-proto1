@@ -1,5 +1,13 @@
 "use strict";
 
+const colRadius = 400;
+const colHeight = 800;
+
+// number of loops of columns to generate
+const numColLoops= 3; // integer value from 3 to 5 should work
+// number of columns to generate
+const maxColumns = 1 + 6*numColLoops*(numColLoops+1)/2;
+
 // Center-On Stencil
 var centerOn = [ [ -2, -1, -2 ],
                  [ -1, 12, -1 ],
@@ -63,15 +71,15 @@ class Column extends THREE.Group {
     this.rotateY(Math.PI/6);
     //------------------------------------------------------------------
     // Comment out when no longer needed.
-    var cylGeom = new THREE.CylinderBufferGeometry( radius, radius,
-                                                    height, 6, 1, true);
-    var cylMat = new THREE.MeshBasicMaterial( { color: 0x808080,
-                                                // blending: THREE.AdditiveBlending,
-                                                wireframe: false,
-                                                side: THREE.DoubleSide,
-                                                transparent: true,
-                                                opacity: 0.1 } );
-    this.helper = new THREE.Mesh(cylGeom, cylMat);
+    this.geom = new THREE.CylinderBufferGeometry( radius, radius,
+                                                  height, 6, 1, true);
+    this.mat = new THREE.MeshBasicMaterial( { color: 0x101010,
+                                              // blending: THREE.AdditiveBlending,
+                                              wireframe: false,
+                                              side: THREE.DoubleSide,
+                                              transparent: true,
+                                              opacity: gui.column.opacity } );
+    this.helper = new THREE.Mesh(this.geom, this.mat);
     this.helper.layers.set(columnLayer);
     // this.helper.rotateY(Math.PI/6);
     this.add(this.helper);
@@ -92,25 +100,26 @@ class Column extends THREE.Group {
     var min  = 1000; // Minimum activation over entire column
     var max  =-1000; // Maximum activation over entire column
     var idx  =-1;    // Minicolumn with maximum activation
-    this.miniColumns.forEach( function(mc, i) {
-      mc.updateState(data, dt);
-      for (var z=0; z<3; ++z) {
-        min = Math.min(min, mc.prox[z]);
-        if (mc.prox[z] > max && !mc.activated) {
-          idx = i;
-          max = mc.prox[z];
+    this.miniColumns.slice(0, gui.miniColumn.count)
+      .forEach( function(mc, i) {
+        mc.updateState(data, dt);
+        for (var z=0; z<3; ++z) {
+          min = Math.min(min, mc.prox[z]);
+          if (mc.prox[z] > max && !mc.activated) {
+            idx = i;
+            max = mc.prox[z];
+          }
         }
-      }
-    }, this);
+      }, this);
     if (max > gui.proximal.threshold) {
       // Shade the minicolumn with the maximum activation, fade the rest
       this.miniColumns[idx].activate(min, max);
     }
-    this.miniColumns.forEach( function(mc, i) {
-      mc.renderNodes();
-      mc.trainDistal();
-      mc.decay();
-    }, this);
-    
+    this.miniColumns.slice(0, gui.miniColumn.count)
+      .forEach( function(mc, i) {
+        mc.renderNodes();
+        mc.trainDistal();
+        mc.decay();
+      }, this);
   }
 };

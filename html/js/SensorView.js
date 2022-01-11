@@ -10,19 +10,20 @@ class GatedInputView {
     document.getElementById('gatedInput').appendChild(this.canvas);
   }
   render() {
-    const R = Math.round(gui.sensorRadius);
+    const N = gui.column.count;
+    const R = Math.round(gui.retinaScale);
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     // Save the image data under the current fovea stencil
     var x0 = seqView.x0;
     var y0 = seqView.y0;
     this.update(0, x0, y0);
-    for (var i=1, ii=1; i<=numColLoops && ii<gui.numColumns; ++i) {
-      for (var j=1; j<=i && ii<gui.numColumns; ++j, ++ii) {
+    for (var i=1, ii=1; i<=numColLoops && ii<N; ++i) {
+      for (var j=1; j<=i && ii<N; ++j, ++ii) {
         var x1 = (2*i-j)*sqrt3/2;
         var y1 = (j*3/2);
         var rad = R*Math.sqrt(x1*x1 + y1*y1);
         var ang = Math.atan2(y1, x1);
-        for (var k=0, th=ang; k<6 && ii<gui.numColumns; ++k, th+=Math.PI/3) {
+        for (var k=0, th=ang; k<6 && ii<N; ++k, th+=Math.PI/3) {
           const x = Math.floor(x0 + rad*Math.cos(th));
           const y = Math.floor(y0 + rad*Math.sin(th));
           this.update(ii, x, y);
@@ -32,7 +33,7 @@ class GatedInputView {
   }
   update(ii, x, y) {
     const W = this.canvas.width;
-    const R = Math.round(gui.sensorRadius);
+    const R = Math.round(gui.retinaScale);
     const C = Math.floor(W/2);
     const w = logGabor.filterWidth;
     const img = seqView.captureNode(x, y);

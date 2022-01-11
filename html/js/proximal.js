@@ -1,8 +1,8 @@
 
 function ProximalDendrite(root) {
   this.root = root;
-	this.synapsePos = new Float32Array( 3*(gui.numSegs + 1) );
-	this.synapseCol = new Float32Array( 3*(gui.numSegs + 1) );
+	this.synapsePos = new Float32Array( 3*(gui.proximal.numSegs + 1) );
+	this.synapseCol = new Float32Array( 3*(gui.proximal.numSegs + 1) );
   this.posAttrib = new THREE.BufferAttribute( this.synapsePos, 3 )
     .setUsage( THREE.DynamicDrawUsage );
   this.colAttrib = new THREE.BufferAttribute( this.synapseCol, 3 )

@@ -40,9 +40,9 @@ const dendriteMaterial = new THREE.LineBasicMaterial( {
 } );
 
 class DendriteView extends THREE.LineSegments {
-  constructor() {
-	  const pos = new Float32Array( 3*(gui.numSegs + 1) );
-	  const col = new Float32Array( 3*(gui.numSegs + 1) );
+  constructor(numSegs) {
+	  const pos = new Float32Array( 3*(numSegs + 1) );
+	  const col = new Float32Array( 3*(numSegs + 1) );
     const posAttrib = new THREE.BufferAttribute( pos, 3 )
           .setUsage( THREE.StaticDrawUsage );
     const colAttrib = new THREE.BufferAttribute( col, 3 )
