@@ -2,7 +2,7 @@
 
 class RetinaPatch extends THREE.Group {
   //------------------------------------------------------------------
-  constructor(x0, y0, N, view) {
+  constructor(x0, y0, N, color) {
     super();
     // Patch center (in pixel coordinates)
     this.x0 = x0;
@@ -25,7 +25,7 @@ class RetinaPatch extends THREE.Group {
     //----------------------------------
     // Init graphical display
     this.columns = [];
-	  var col = new Column(colRadius, colHeight, numMCLoops, 0)
+	  var col = new Column(colRadius, colHeight, numMCLoops, 0, color)
     this.columns.push(col);
     this.add(col);
 	  for (var i=1, ii=1; i<=numColLoops; ++i) {
@@ -35,7 +35,7 @@ class RetinaPatch extends THREE.Group {
         var rad = colRadius*Math.sqrt(x*x + y*y);
         var ang = Math.atan2(y, x);
         for (var k=0, th=ang; k<6; ++k, ++ii, th+=Math.PI/3) {
-		      col = new Column(colRadius, colHeight, numMCLoops, ii);
+		      col = new Column(colRadius, colHeight, numMCLoops, ii, color);
    	      col.translateX(rad*Math.cos(th));
 		      col.translateZ(rad*Math.sin(th));
           col.visible = ii<gui.column.count;

@@ -36,10 +36,10 @@ var yScharr = [ [  3, 10,  3 ],
 
 //--------------------------------------------------------------------
 class Column extends THREE.Group {
-  constructor(radius, height, numLoops, column) {
+  constructor(radius, height, numLoops, column, color) {
     super();
-    this.lo = new THREE.Color(0x000000); // (0x808080);
-    this.hi = new THREE.Color(0xFFFFFF);
+    this.lo = new THREE.Color(0x101010); // (0x808080);
+    this.hi = new THREE.Color(0x101010);
     this.name   = "COL#" + column.toString();
     this.radius = radius;
     this.height = height;
@@ -73,8 +73,7 @@ class Column extends THREE.Group {
     // Comment out when no longer needed.
     this.geom = new THREE.CylinderBufferGeometry( radius, radius,
                                                   height, 6, 1, true);
-    this.mat = new THREE.MeshBasicMaterial( { color: 0x101010,
-                                              // blending: THREE.AdditiveBlending,
+    this.mat = new THREE.MeshBasicMaterial( { color: (color || 0x444444),
                                               wireframe: false,
                                               side: THREE.DoubleSide,
                                               transparent: true,

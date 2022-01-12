@@ -30,7 +30,7 @@ var synapseMat = new THREE.LineBasicMaterial( {
 // Material to be applied to neurons
 const neuronMat = new THREE.ShaderMaterial( {
 	uniforms: {
-	  color:   { value: new THREE.Color( 0xffffff ) },
+	  color:   { value: new THREE.Color( 0x101010 ) },
 	  // texture: { value: new THREE.TextureLoader().load( "textures/sprites/spark1.png" ) },
     alphaTest: { value: 0.1 }
   },
@@ -45,7 +45,7 @@ class MiniColumn extends THREE.Group {
   constructor(radius, height, idx, parent, filter) {
     super();
     this.lo = new THREE.Color(0x101010); // (0x808080);
-    this.hi = new THREE.Color(0xFFFFFF);
+    this.hi = new THREE.Color(0x101010);
     this.biasColor = biasColor.clone();
     this.parent = parent;
     this.name   = parent.name + ":MC#" + idx.toString();

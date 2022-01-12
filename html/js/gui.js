@@ -28,7 +28,7 @@ class GUI extends dat.GUI {
         cortexView.camera.layers.toggle(columnLayer);
       } );
     //----------------------------------------------------------------
-	  this.column.count = 7;
+	  this.column.count = 19;
 	  this.column.add( this.column, "count", 1, maxColumns, 1 )
       .onChange( function( value ) {
         if (cortex)

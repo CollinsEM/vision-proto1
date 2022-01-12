@@ -35,11 +35,11 @@ function init() {
   // Init inset window view of input field of view
   seqView = new SequenceView(gui.seq.NI, gui.seq.NJ);
   // Init left retina sensors
-  retinaL = new RetinaPatch(-gui.eyeSep, 0, maxColumns, seqView);
+  retinaL = new RetinaPatch(-gui.eyeSep, 0, maxColumns, "yellow");
   retinaL.translateY( 0.55*colHeight);
   cortexView.add(retinaL);
   // Init right retina sensors
-  retinaR = new RetinaPatch( gui.eyeSep, 0, maxColumns, seqView);
+  retinaR = new RetinaPatch( gui.eyeSep, 0, maxColumns, "cyan");
   retinaR.translateY(-0.55*colHeight);
   cortexView.add(retinaR);
   // Init cortical patches attached to each retina
