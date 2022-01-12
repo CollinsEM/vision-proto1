@@ -210,15 +210,15 @@ class GUI extends dat.GUI {
         if (retinaR) retinaR.enableMotor = value;
       } );
     //----------------------------------------------------------------
-    this.retinaScale = 1;
-	  this.add( this, "retinaScale", 1, maxSensorRadius, 0.05 )
+    this.retinaScale = 1.0;
+	  this.add( this, "retinaScale", 1.0, maxSensorRadius, 0.05 )
       .onChange( function( value ) {
         if (retinaL) retinaL.setScale(value);
         if (retinaR) retinaR.setScale(value);
       } );
     //----------------------------------------------------------------
     this.eyeSep = 10;
-    this.add(this, "eyeSep", -10, 50, 1)
+    this.add(this, "eyeSep", 0, 50, 1)
       .onChange( function(value) {
         if (retinaL) retinaL.x0 = -value;
         if (retinaR) retinaR.x0 =  value;

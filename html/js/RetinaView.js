@@ -105,11 +105,12 @@ class RetinaPatch extends THREE.Group {
   }
   // Draw the fovea sensor on top of the sequence canvas
   renderStencil(color) {
+    const N = Math.min(this.numSensors, gui.column.count);
     const x0 = seqView.x0 + this.x0;
     const y0 = seqView.y0 + this.y0;
     seqView.context.strokeStyle = (color || "green");
     seqView.context.lineWidth = 1;
-    for (let i=0; i<this.numSensors; ++i) {
+    for (let i=0; i<N; ++i) {
       const x = x0 + this.x[i];
       const y = y0 + this.y[i];
       const r = this.r[i];

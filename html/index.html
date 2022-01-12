@@ -71,7 +71,7 @@
         vec2 p = gl_PointCoord;
         float x = (p.x - 0.5);
         float y = (p.y - 0.5);
-        float mag = 0.01/(x*x + y*y);
+        float mag = min(1.0, 0.01/(x*x + y*y));
 			  gl_FragColor = mag* vec4( color * vColor, 1.0 );
 			  // gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
         if ( mag < alphaTest ) discard;

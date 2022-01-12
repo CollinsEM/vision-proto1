@@ -11,7 +11,7 @@ var gui, seqView, cortexView, retinaL, retinaR;
 var biasAmplitude = 0.25;
 var biasColor = new THREE.Color(biasAmplitude, biasAmplitude, biasAmplitude);
 
-var columnLayer = 1;
+var columnLayer     = 1;
 var miniColumnLayer = 2;
 var neuronLayer     = 3;
 var proximalLayer   = 4;
@@ -43,9 +43,9 @@ function init() {
   retinaR.translateY(-0.55*colHeight);
   cortexView.add(retinaR);
   // Init cortical patches attached to each retina
-  cortex  = new Cortex();
-  cortex.translateY(-1.55*colHeight);
-  cortexView.add(cortex);
+  // cortex  = new Cortex();
+  // cortex.translateY(-1.55*colHeight);
+  // cortexView.add(cortex);
   
   // inputView = new GatedInputView();
 
@@ -77,18 +77,18 @@ function render() {
   // renders the MNIST digits without the retina stencil overlay
   seqView.render();
   // Extract the raw image data under the retina stencil.
-  retinaL.update(dt);
-  retinaR.update(dt);
+  if (retinaL) retinaL.update(dt);
+  if (retinaR) retinaR.update(dt);
   // Update the V1 cortex state using the current sensor data.
-  cortex.update(dt);
+  if (cortex) cortex.update(dt);
   // Generate saccade if necessary
   // retinaL.updateMotor(dt);
   // retinaR.updateMotor(dt);
   // Render the cortex visualization.
 	cortexView.render();
   // Render the current attention stencil in the sequence view.
-  retinaL.renderStencil("yellow");
-  retinaR.renderStencil("cyan");
+  if (retinaL) retinaL.renderStencil("yellow");
+  if (retinaR) retinaR.renderStencil("cyan");
   // Render filters
   // logGabor.render();
 
